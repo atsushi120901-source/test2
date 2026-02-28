@@ -287,11 +287,12 @@ function pchipInterpolate(xs, ys, t) {
   const n = xs.length;
   const d = pchipDerivatives(xs, ys);
 
-  // Find segment
+  // Find segment (k ranges 0..n-2)
   let k = 0;
-  for (let i = 0; i < n - 2; i++) {
+  for (let i = 0; i < n - 1; i++) {
     if (t >= xs[i]) k = i;
   }
+  if (k > n - 2) k = n - 2;
 
   const h = xs[k + 1] - xs[k];
   const u = (t - xs[k]) / h;
@@ -373,9 +374,12 @@ function drawChart(data) {
   const { labels, fractions, datasets } = data;
   const n = labels.length;
 
-  // ── Margins: all Y-axes on the left ──
-  const plotX0 = LEFT_BASE + (n - 1) * AXIS_OFFSET + 20;
-  const plotX1 = W - MARGIN_RIGHT;
+  // ── Margins: left axes (0..n-2), right axis (n-1) when n>1 ──
+  const hasRightAxis = n > 1;
+  const leftAxisCount = hasRightAxis ? n - 1 : 1;
+  const rightSpace = hasRightAxis ? 75 : MARGIN_RIGHT;
+  const plotX0 = LEFT_BASE + (leftAxisCount - 1) * AXIS_OFFSET + 20;
+  const plotX1 = W - rightSpace;
   const plotY0 = MARGIN_TOP;
   const plotY1 = H - MARGIN_BOTTOM;
   const plotW  = plotX1 - plotX0;
@@ -465,9 +469,13 @@ function drawChart(data) {
     ctx.restore();
   }
 
-  // All Y-axes on the left, each offset 55 px to the right
-  for (let i = 0; i < n; i++) {
+  // Left axes: datasets 0 .. n-2
+  for (let i = 0; i < leftAxisCount; i++) {
     drawYAxis(i, LEFT_BASE + i * AXIS_OFFSET, 'left');
+  }
+  // Right axis: last dataset (when n > 1)
+  if (hasRightAxis) {
+    drawYAxis(n - 1, plotX1, 'right');
   }
 
   // ── X axis ──
