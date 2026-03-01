@@ -635,15 +635,9 @@ function drawChart(data) {
   const { labels, fractions, datasets } = data;
   const n = labels.length;
 
-  // ── Chart title ──
+  // ── Chart title (topMargin must be computed before layout) ──
   const titleText = document.getElementById('chartTitle').value.trim();
   const topMargin = titleText ? 52 : MARGIN_TOP;
-  if (titleText) {
-    ctx.fillStyle = '#1a1a1a';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(titleText, W / 2, 26);
-  }
 
   // ── Margins: left axes (0..n-2), right axis (n-1) when n>1 ──
   const hasRightAxis = n > 1;
@@ -675,6 +669,14 @@ function drawChart(data) {
   // ── Background ──
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
+
+  // ── Chart title (drawn after background so it is not overwritten) ──
+  if (titleText) {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(titleText, W / 2, 26);
+  }
 
   // ── Grid ──
   const gridSteps = 5;
