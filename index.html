@@ -6,7 +6,6 @@
 <title>クロマトグラフィー 散布図ツール</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
     --bg: #f5f5f5;
     --card: #ffffff;
@@ -19,7 +18,6 @@
     --btn-hover: #e5e5e5;
     --radius: 8px;
   }
-
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: var(--bg);
@@ -27,30 +25,25 @@
     min-height: 100vh;
     padding: 24px 16px 48px;
   }
-
   .container {
     max-width: 960px;
     margin: 0 auto;
   }
-
   header {
     margin-bottom: 32px;
     text-align: center;
   }
-
   header h1 {
     font-size: 1.7rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     color: #111111;
   }
-
   header p {
     margin-top: 6px;
     font-size: 0.9rem;
     color: var(--text-muted);
   }
-
   .card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -58,7 +51,6 @@
     padding: 24px;
     margin-bottom: 20px;
   }
-
   .card h2 {
     font-size: 0.85rem;
     font-weight: 600;
@@ -67,7 +59,6 @@
     color: var(--text-muted);
     margin-bottom: 14px;
   }
-
   .drop-zone {
     border: 2px dashed var(--border);
     border-radius: 8px;
@@ -84,7 +75,6 @@
     background: rgba(59,130,246,0.06);
   }
   .drop-zone input[type="file"] { display: none; }
-
   textarea {
     width: 100%;
     height: 220px;
@@ -101,14 +91,12 @@
     transition: border-color 0.2s;
   }
   textarea:focus { border-color: var(--accent); }
-
   .actions {
     display: flex;
     gap: 10px;
     margin-top: 14px;
     flex-wrap: wrap;
   }
-
   button {
     font-family: inherit;
     font-size: 0.88rem;
@@ -120,37 +108,31 @@
     transition: background 0.18s, transform 0.1s;
   }
   button:active { transform: scale(0.97); }
-
   .btn-primary {
     background: var(--accent);
     color: #fff;
   }
   .btn-primary:hover { background: var(--accent-hover); }
-
   .btn-secondary {
     background: var(--btn-bg);
     color: var(--text);
   }
   .btn-secondary:hover { background: var(--btn-hover); }
-
   .error-msg {
     margin-top: 10px;
     font-size: 0.82rem;
     color: #dc2626;
     display: none;
   }
-
   .chart-wrap {
     position: relative;
     width: 100%;
   }
-
   canvas {
     display: block;
     width: 100%;
     border-radius: 8px;
   }
-
   .legend {
     display: flex;
     flex-wrap: wrap;
@@ -158,7 +140,6 @@
     justify-content: center;
     margin-top: 16px;
   }
-
   .legend-item {
     display: flex;
     align-items: center;
@@ -166,14 +147,12 @@
     font-size: 0.83rem;
     color: var(--text-muted);
   }
-
   .legend-dot {
     width: 11px;
     height: 11px;
     border-radius: 50%;
     flex-shrink: 0;
   }
-
   #emptyState {
     text-align: center;
     padding: 60px 0 40px;
@@ -185,7 +164,6 @@
     margin: 0 auto 14px;
     opacity: 0.3;
   }
-
   .color-swatch {
     width: 16px;
     height: 16px;
@@ -200,7 +178,6 @@
   .color-swatch::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
   .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; }
   .color-swatch::-moz-color-swatch { border: none; border-radius: 50%; }
-
   .table-size-controls {
     display: flex; align-items: center; gap: 14px;
     margin-bottom: 10px; flex-wrap: wrap;
@@ -213,7 +190,6 @@
     font-family: inherit; text-align: center;
   }
   .table-size-controls input[type="number"]:focus { border-color: var(--accent); }
-
   .input-table-wrap { overflow-x: auto; margin-bottom: 12px; }
   .input-table { border-collapse: collapse; font-size: 0.78rem; width: max-content; }
   .input-table th, .input-table td {
@@ -236,7 +212,6 @@
   .input-table .btn-icon:hover { color: #dc2626; }
   .input-table .add-col-th { border: none; background: none; padding: 4px 6px; }
   .input-table tfoot td { border: none; padding-top: 6px; }
-
   .curve-toggle {
     display: flex; align-items: center; gap: 6px;
     font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; cursor: pointer;
@@ -250,7 +225,6 @@
     <h1>クロマトグラフィー 散布図ツール</h1>
     <p>フラクションデータを入力してタンパク質活性の散布図を生成します</p>
   </header>
-
   <div class="card">
     <h2>データ入力</h2>
     <div class="drop-zone" id="dropZone">
@@ -270,9 +244,7 @@
       <label>横軸ラベル
         <input type="text" id="xAxisLabel" value="フラクション番号" style="width:120px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
       </label>
-      <label>グラフタイトル
-        <input type="text" id="chartTitle" placeholder="（任意）" style="width:160px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
-      </label>
+      <button class="btn-secondary" id="resetTableBtn">テーブルをリセット</button>
     </div>
     <div class="input-table-wrap">
       <table id="inputTable" class="input-table"></table>
@@ -284,9 +256,13 @@
     </div>
     <div class="error-msg" id="errorMsg"></div>
   </div>
-
   <div class="card">
     <h2>散布図</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <label for="chartTitle" style="font-size:0.83rem;color:var(--text-muted);white-space:nowrap;">グラフタイトル</label>
+      <input type="text" id="chartTitle" placeholder="（任意）"
+        style="flex:1;max-width:400px;border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:0.9rem;outline:none;font-family:inherit;">
+    </div>
     <label class="curve-toggle">
       <input type="checkbox" id="showCurveChk" checked>
       近似曲線を表示
@@ -305,7 +281,6 @@
     <div class="legend" id="legend"></div>
   </div>
 </div>
-
 <script>
 // ─── SAMPLE DATA ────────────────────────────────────────────────────────────
 const SAMPLE = `Fraction,Protein A,Protein B,Protein C
@@ -322,7 +297,6 @@ const SAMPLE = `Fraction,Protein A,Protein B,Protein C
 11,0.10,3.80,1.20
 12,0.03,1.85,0.35
 13,0.01,0.55,0.08`;
-
 // ─── COLORS ─────────────────────────────────────────────────────────────────
 const PALETTE = [
   '#e11d48',  // rose-600
@@ -331,37 +305,21 @@ const PALETTE = [
   '#ea580c',  // orange-600
   '#7c3aed',  // violet-600
 ];
-
 // User-selected colors (hex strings); reset to PALETTE defaults on each render
 let userColors = [];
-
 // ─── PCHIP IMPLEMENTATION ───────────────────────────────────────────────────
 function pchipDerivatives(xs, ys) {
   const n = xs.length;
   const d = new Array(n).fill(0);
   const delta = [];
   const h = [];
-
   for (let i = 0; i < n - 1; i++) {
     h.push(xs[i + 1] - xs[i]);
     delta.push((ys[i + 1] - ys[i]) / h[i]);
   }
-
-  // Endpoints: Fritsch-Carlson 3-point formula with monotonicity clamp
-  if (n >= 3) {
-    let d0 = ((2*h[0] + h[1]) * delta[0] - h[0] * delta[1]) / (h[0] + h[1]);
-    if (Math.sign(d0) !== Math.sign(delta[0])) d0 = 0;
-    else if (Math.abs(d0) > 3 * Math.abs(delta[0])) d0 = 3 * delta[0];
-    d[0] = d0;
-    let dn = ((2*h[n-2] + h[n-3]) * delta[n-2] - h[n-2] * delta[n-3]) / (h[n-2] + h[n-3]);
-    if (Math.sign(dn) !== Math.sign(delta[n-2])) dn = 0;
-    else if (Math.abs(dn) > 3 * Math.abs(delta[n-2])) dn = 3 * delta[n-2];
-    d[n-1] = dn;
-  } else {
-    d[0] = delta[0];
-    d[n - 1] = delta[n - 2];
-  }
-
+  // Endpoints: one-sided differences
+  d[0] = delta[0];
+  d[n - 1] = delta[n - 2];
   for (let i = 1; i < n - 1; i++) {
     if (delta[i - 1] * delta[i] <= 0) {
       d[i] = 0;
@@ -371,47 +329,37 @@ function pchipDerivatives(xs, ys) {
       d[i] = (w1 + w2) / (w1 / delta[i - 1] + w2 / delta[i]);
     }
   }
-
   return d;
 }
-
 function pchipInterpolate(xs, ys, t) {
   const n = xs.length;
   const d = pchipDerivatives(xs, ys);
-
   // Find segment (k ranges 0..n-2)
   let k = 0;
   for (let i = 0; i < n - 1; i++) {
     if (t >= xs[i]) k = i;
   }
   if (k > n - 2) k = n - 2;
-
   const h = xs[k + 1] - xs[k];
   const u = (t - xs[k]) / h;
-
   // Hermite basis functions
   const h00 = (1 + 2 * u) * (1 - u) * (1 - u);
   const h10 = u * (1 - u) * (1 - u);
   const h01 = u * u * (3 - 2 * u);
   const h11 = u * u * (u - 1);
-
   return h00 * ys[k] + h10 * h * d[k] + h01 * ys[k + 1] + h11 * h * d[k + 1];
 }
-
 // ─── DELIMITED TEXT PARSER (CSV / TSV) ───────────────────────────────────────
 // Auto-detects delimiter: tab (Excel/TSV) or comma (CSV)
 function parseDelimited(text) {
   const lines = text.trim().split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) throw new Error('データが不足しています（ヘッダー＋最低1行）');
-
   const delim = lines[0].includes('\t') ? '\t' : ',';
   const header = lines[0].split(delim).map(s => s.trim());
   if (header.length < 2) throw new Error('列が不足しています（フラクション番号＋最低1列のデータ）');
-
   const labels = header.slice(1);
   const fractions = [];
   const datasets = labels.map(() => []);
-
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(delim).map(s => s.trim());
     const frac = cols[0].trim();
@@ -423,30 +371,23 @@ function parseDelimited(text) {
       datasets[j].push(v);
     }
   }
-
   return { labels, fractions, datasets };
 }
-
 // ─── TABLE STATE & DOM ───────────────────────────────────────────────────────
 let tableState = { fractions: [], labels: [], datasets: [] };
-
 function buildTableDOM() {
   const tbl = document.getElementById('inputTable');
   tbl.innerHTML = '';
-
   const { fractions, labels, datasets } = tableState;
   const nCols = labels.length;
   const nRows = fractions.length;
-
   // ── THEAD ──
   const thead = tbl.createTHead();
   const hRow = thead.insertRow();
-
   // "フラクション" fixed header
   const th0 = document.createElement('th');
   th0.textContent = 'フラクション';
   hRow.appendChild(th0);
-
   // One header cell per dataset
   labels.forEach((lbl, j) => {
     const th = document.createElement('th');
@@ -464,7 +405,6 @@ function buildTableDOM() {
     th.appendChild(del);
     hRow.appendChild(th);
   });
-
   // "+ 列追加" button cell
   const thAdd = document.createElement('th');
   thAdd.className = 'add-col-th';
@@ -475,12 +415,10 @@ function buildTableDOM() {
   addColBtn.addEventListener('click', addColumn);
   thAdd.appendChild(addColBtn);
   hRow.appendChild(thAdd);
-
   // ── TBODY ──
   const tbody = tbl.createTBody();
   fractions.forEach((frac, i) => {
     const row = tbody.insertRow();
-
     // Fraction cell
     const fracTd = row.insertCell();
     const fracInp = document.createElement('input');
@@ -494,7 +432,6 @@ function buildTableDOM() {
     delRowBtn.addEventListener('click', () => removeRow(i));
     fracTd.appendChild(fracInp);
     fracTd.appendChild(delRowBtn);
-
     // Data cells
     datasets.forEach((ds, j) => {
       const td = row.insertCell();
@@ -507,11 +444,9 @@ function buildTableDOM() {
       });
       td.appendChild(inp);
     });
-
     // Empty cell under "+ 列追加" column
     row.insertCell();
   });
-
   // ── TFOOT ──
   const tfoot = tbl.createTFoot();
   const fRow = tfoot.insertRow();
@@ -524,35 +459,30 @@ function buildTableDOM() {
   addRowBtn.addEventListener('click', addRow);
   addTd.appendChild(addRowBtn);
 }
-
 function addRow() {
   const nextFrac = tableState.fractions.length + 1;
   tableState.fractions.push(String(nextFrac));
   tableState.datasets.forEach(ds => ds.push(''));
   buildTableDOM();
 }
-
 function removeRow(i) {
   if (tableState.fractions.length <= 1) return;
   tableState.fractions.splice(i, 1);
   tableState.datasets.forEach(ds => ds.splice(i, 1));
   buildTableDOM();
 }
-
 function addColumn() {
   const j = tableState.labels.length + 1;
   tableState.labels.push('Dataset ' + j);
   tableState.datasets.push(tableState.fractions.map(() => ''));
   buildTableDOM();
 }
-
 function removeColumn(j) {
   if (tableState.labels.length <= 1) return;
   tableState.labels.splice(j, 1);
   tableState.datasets.splice(j, 1);
   buildTableDOM();
 }
-
 function loadCSVToTable(csvText) {
   const parsed = parseDelimited(csvText);
   tableState.fractions = parsed.fractions.map(String);
@@ -560,31 +490,24 @@ function loadCSVToTable(csvText) {
   tableState.datasets  = parsed.datasets.map(ds => ds.slice());
   buildTableDOM();
 }
-
 function loadSampleToTable() {
   loadCSVToTable(SAMPLE);
 }
-
 function resetTable(nRows, nCols) {
   tableState.fractions = Array.from({ length: nRows }, (_, i) => String(i + 1));
   tableState.labels    = Array.from({ length: nCols }, (_, j) => 'Dataset ' + (j + 1));
   tableState.datasets  = Array.from({ length: nCols }, () => Array(nRows).fill(''));
   buildTableDOM();
 }
-
 // Read DOM inputs back into tableState and return a validated data object.
 // Returns null and shows error on invalid input.
 function readTableState() {
-  // Sync inputs back into tableState from DOM
   const tbl = document.getElementById('inputTable');
   const rows = tbl.tBodies[0].rows;
   const headerInputs = tbl.tHead.rows[0].querySelectorAll('.col-name-input');
-
   headerInputs.forEach((inp, j) => { tableState.labels[j] = inp.value.trim() || ('Dataset ' + (j + 1)); });
-
   const fractions = [];
   const datasets = tableState.labels.map(() => []);
-
   for (let i = 0; i < rows.length; i++) {
     const fracVal = rows[i].cells[0].querySelector('input').value.trim();
     if (!fracVal) { showError(`行 ${i + 1} のフラクション値が空です`); return null; }
@@ -597,20 +520,16 @@ function readTableState() {
       datasets[j].push(v);
     }
   }
-
   if (fractions.length === 0) { showError('データ行が1行以上必要です'); return null; }
   if (tableState.labels.length === 0) { showError('データセットが1列以上必要です'); return null; }
-
   return { labels: tableState.labels.slice(), fractions, datasets };
 }
-
 // ─── CHART DRAWING ──────────────────────────────────────────────────────────
 const MARGIN_TOP    = 30;
 const MARGIN_BOTTOM = 54;
 const MARGIN_RIGHT  = 20;
-const LEFT_BASE     = 65;  // x-pos of leftmost (axis 0)
+const LEFT_BASE     = 65;
 const AXIS_OFFSET   = 55;
-
 function niceRange(max) {
   if (max <= 0) max = 1;
   const rawStep = max / 5;
@@ -625,69 +544,56 @@ function niceRange(max) {
   const niceMax = Math.ceil(max / step) * step;
   return { max: niceMax, step };
 }
-
 function drawChart(data) {
   const canvas = document.getElementById('chart');
   const dpr = window.devicePixelRatio || 1;
   const cssWidth = canvas.parentElement.clientWidth;
   const cssHeight = Math.max(380, Math.round(cssWidth * 0.5));
-
   canvas.style.width  = cssWidth + 'px';
   canvas.style.height = cssHeight + 'px';
   canvas.width  = Math.round(cssWidth * dpr);
   canvas.height = Math.round(cssHeight * dpr);
-
   const ctx = canvas.getContext('2d');
   ctx.scale(dpr, dpr);
-
   const W = cssWidth;
   const H = cssHeight;
   const { labels, fractions, datasets } = data;
   const n = labels.length;
-
-  // ── Chart title (topMargin must be computed before layout) ──
+  // ── Chart title ──
   const titleText = document.getElementById('chartTitle').value.trim();
   const topMargin = titleText ? 58 : MARGIN_TOP;
-
-  // ── Margins: left axes (0..n-2), right axis (n-1) when n>1 ──
+  // ── Margins ──
   const hasRightAxis = n > 1;
   const leftAxisCount = hasRightAxis ? n - 1 : 1;
   const rightSpace = hasRightAxis ? 95 : MARGIN_RIGHT;
   const rightAxisXPos = W - rightSpace;
   const plotX0 = LEFT_BASE + (leftAxisCount - 1) * AXIS_OFFSET + 20;
-  // 20px gap between plot area and right axis (mirrors the left side gap)
   const plotX1 = hasRightAxis ? rightAxisXPos - 20 : W - MARGIN_RIGHT;
   const plotY0 = topMargin;
   const plotY1 = H - MARGIN_BOTTOM;
   const plotW  = plotX1 - plotX0;
   const plotH  = plotY1 - plotY0;
-
   // ── Scale each dataset ──
   const scales = datasets.map(ds => niceRange(Math.max(...ds)));
-
-  // ── X range: use index-based positioning to support alphanumeric fractions ──
+  // ── X range ──
   const xRange = fractions.length > 1 ? fractions.length - 1 : 1;
-  const xIndices = fractions.map((_, i) => i);  // [0, 1, 2, ..., n-1]
-
+  const xIndices = fractions.map((_, i) => i);
   function toCanvasX(idx) {
     return plotX0 + (idx / xRange) * plotW;
   }
   function toCanvasY(val, scaleIdx) {
     return plotY1 - (val / scales[scaleIdx].max) * plotH;
   }
-
   // ── Background ──
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, W, H);
-
-  // ── Chart title (drawn after background so it is not overwritten) ──
+  // ── Chart title ──
   if (titleText) {
     ctx.fillStyle = '#1a1a1a';
     ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(titleText, W / 2, 34);
   }
-
   // ── Grid ──
   const gridSteps = 5;
   ctx.strokeStyle = '#e5e5e5';
@@ -699,7 +605,6 @@ function drawChart(data) {
     ctx.lineTo(plotX1, y);
     ctx.stroke();
   }
-  // Vertical grid
   fractions.forEach((frac, fi) => {
     const x = toCanvasX(fi);
     ctx.strokeStyle = '#e5e5e5';
@@ -708,22 +613,18 @@ function drawChart(data) {
     ctx.lineTo(x, plotY1);
     ctx.stroke();
   });
-
   // ── Draw Y axes ──
   function drawYAxis(dsIdx, xPos, side, color) {
     const { max, step } = scales[dsIdx];
     const nSteps = Math.round(max / step);
     const tickDir = side === 'left' ? -1 : 1;
-
-    // Axis line (thin colored)
     ctx.strokeStyle = color + '55';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(xPos, plotY0);
     ctx.lineTo(xPos, plotY1);
     ctx.stroke();
-
-    // Measure max tick label width for dynamic label offset
+    // Measure tick label width at drawing font size
     ctx.font = '12px monospace';
     let maxTickW = 0;
     for (let i = 0; i <= nSteps; i++) {
@@ -731,7 +632,6 @@ function drawChart(data) {
       const lbl = val % 1 === 0 ? val.toString() : val.toFixed(2);
       maxTickW = Math.max(maxTickW, ctx.measureText(lbl).width);
     }
-
     ctx.textAlign = side === 'left' ? 'right' : 'left';
     for (let i = 0; i <= nSteps; i++) {
       const val = i * step;
@@ -746,9 +646,7 @@ function drawChart(data) {
       ctx.fillStyle = color;
       ctx.fillText(lbl, xPos + tickDir * 8, y + 4.5);
     }
-
-    // Axis label: placed just outside the tick numbers
-    // offset = numStart(8) + numWidth + gap(3) + halfFontSize(7)
+    // Axis label (rotated)
     const labelOffset = tickDir * (8 + maxTickW + 3 + 7);
     ctx.save();
     ctx.translate(xPos + labelOffset, plotY0 + plotH / 2);
@@ -759,16 +657,12 @@ function drawChart(data) {
     ctx.fillText(labels[dsIdx], 0, 0);
     ctx.restore();
   }
-
-  // Left axes: datasets 0 .. n-2
   for (let i = 0; i < leftAxisCount; i++) {
     drawYAxis(i, LEFT_BASE + i * AXIS_OFFSET, 'left', userColors[i] || PALETTE[i % PALETTE.length]);
   }
-  // Right axis: last dataset (when n > 1), drawn at rightAxisXPos (20px right of plotX1)
   if (hasRightAxis) {
     drawYAxis(n - 1, rightAxisXPos, 'right', userColors[n - 1] || PALETTE[(n - 1) % PALETTE.length]);
   }
-
   // ── X axis ──
   ctx.strokeStyle = 'rgba(0,0,0,0.15)';
   ctx.lineWidth = 1;
@@ -776,7 +670,6 @@ function drawChart(data) {
   ctx.moveTo(plotX0, plotY1);
   ctx.lineTo(plotX1, plotY1);
   ctx.stroke();
-
   ctx.fillStyle = '#555555';
   ctx.font = '12px monospace';
   ctx.textAlign = 'center';
@@ -784,43 +677,35 @@ function drawChart(data) {
     const x = toCanvasX(fi);
     ctx.fillText(frac, x, plotY1 + 20);
   });
-
-  // X axis label
   const xAxisLabelText = document.getElementById('xAxisLabel').value.trim() || 'フラクション番号';
   ctx.fillStyle = '#555555';
   ctx.font = '600 13px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(xAxisLabelText, plotX0 + plotW / 2, H - 8);
-
-  // ── Draw curves + fills + dots per dataset ──
+  // ── Draw curves + dots ──
   const CURVE_SAMPLES = 200;
-
   for (let di = 0; di < n; di++) {
     const color = userColors[di] || PALETTE[di % PALETTE.length];
     const ys = datasets[di];
-
-    // Curve line (PCHIP smooth interpolation, clipped to plot area)
     if (showCurve && fractions.length >= 2) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(plotX0, plotY0, plotW, plotH);
-      ctx.clip();
-      ctx.beginPath();
+      const curveX = [];
+      const curveY = [];
       for (let s = 0; s <= CURVE_SAMPLES; s++) {
         const t = (s / CURVE_SAMPLES) * xRange;
         const interpVal = pchipInterpolate(xIndices, ys, t);
-        const cx = toCanvasX(t);
-        const cy = toCanvasY(interpVal, di);
-        s === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
+        curveX.push(toCanvasX(t));
+        curveY.push(toCanvasY(Math.max(0, interpVal), di));
+      }
+      ctx.beginPath();
+      ctx.moveTo(curveX[0], curveY[0]);
+      for (let s = 1; s <= CURVE_SAMPLES; s++) {
+        ctx.lineTo(curveX[s], curveY[s]);
       }
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.lineJoin = 'round';
       ctx.stroke();
-      ctx.restore();
     }
-
-    // Data points (dots)
     fractions.forEach((frac, fi) => {
       const cx = toCanvasX(fi);
       const cy = toCanvasY(ys[fi], di);
@@ -833,11 +718,7 @@ function drawChart(data) {
       ctx.stroke();
     });
   }
-
-  // ── Clip to plot area (overdraw guard) ──
-  // Already handled by only drawing within bounds
 }
-
 // ─── LEGEND ──────────────────────────────────────────────────────────────────
 function buildLegend(labels) {
   const el = document.getElementById('legend');
@@ -846,7 +727,6 @@ function buildLegend(labels) {
     const color = userColors[i] || PALETTE[i % PALETTE.length];
     const item = document.createElement('div');
     item.className = 'legend-item';
-
     const swatch = document.createElement('input');
     swatch.type = 'color';
     swatch.className = 'color-swatch';
@@ -856,20 +736,16 @@ function buildLegend(labels) {
       userColors[i] = e.target.value;
       if (currentData) drawChart(currentData);
     });
-
     const label = document.createElement('span');
     label.textContent = name;
-
     item.appendChild(swatch);
     item.appendChild(label);
     el.appendChild(item);
   });
 }
-
 // ─── MAIN FLOW ───────────────────────────────────────────────────────────────
 let currentData = null;
 let showCurve = true;
-
 function showError(msg) {
   const el = document.getElementById('errorMsg');
   el.textContent = msg;
@@ -878,8 +754,6 @@ function showError(msg) {
 function clearError() {
   document.getElementById('errorMsg').style.display = 'none';
 }
-
-// Accepts a pre-validated data object {labels, fractions, datasets}
 function render(data) {
   userColors = [];
   currentData = data;
@@ -889,13 +763,11 @@ function render(data) {
   drawChart(data);
   buildLegend(data.labels);
 }
-
 document.getElementById('plotBtn').addEventListener('click', () => {
   clearError();
   const data = readTableState();
   if (data) render(data);
 });
-
 document.getElementById('clearBtn').addEventListener('click', () => {
   const nRows = Math.max(1, parseInt(document.getElementById('defaultRows').value) || 13);
   const nCols = Math.max(1, parseInt(document.getElementById('defaultCols').value) || 3);
@@ -906,33 +778,30 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   clearError();
   currentData = null;
 });
-
-
+document.getElementById('resetTableBtn').addEventListener('click', () => {
+  const nRows = Math.max(1, parseInt(document.getElementById('defaultRows').value) || 13);
+  const nCols = Math.max(1, parseInt(document.getElementById('defaultCols').value) || 3);
+  resetTable(nRows, nCols);
+  clearError();
+});
 document.getElementById('sampleBtn').addEventListener('click', () => {
   clearError();
   loadSampleToTable();
 });
-
-// ── X axis label / chart title live update ──
 document.getElementById('xAxisLabel').addEventListener('input', () => {
   if (currentData) drawChart(currentData);
 });
 document.getElementById('chartTitle').addEventListener('input', () => {
   if (currentData) drawChart(currentData);
 });
-
-// ── Curve toggle ──
 document.getElementById('showCurveChk').addEventListener('change', e => {
   showCurve = e.target.checked;
   if (currentData) drawChart(currentData);
 });
-
 // ── File drag & drop ──
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
-
 dropZone.addEventListener('click', () => fileInput.click());
-
 dropZone.addEventListener('dragover', e => {
   e.preventDefault();
   dropZone.classList.add('over');
@@ -947,7 +816,6 @@ dropZone.addEventListener('drop', e => {
 fileInput.addEventListener('change', () => {
   if (fileInput.files[0]) readFile(fileInput.files[0]);
 });
-
 function readFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
@@ -960,8 +828,6 @@ function readFile(file) {
   };
   reader.readAsText(file, 'UTF-8');
 }
-
-// ── Responsive redraw ──
 let resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
@@ -969,14 +835,11 @@ window.addEventListener('resize', () => {
     if (currentData) drawChart(currentData);
   }, 120);
 });
-
-// ── Paste interceptor (Excel TSV / CSV) ──
 document.addEventListener('paste', e => {
   const text = (e.clipboardData || window.clipboardData).getData('text');
   const hasTab = text.includes('\t');
   const hasNewline = text.includes('\n');
   const targetIsInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
-  // Intercept tab-separated (Excel) data, or multi-line text pasted outside an input cell
   if (!hasTab && !(hasNewline && !targetIsInput)) return;
   e.preventDefault();
   try {
@@ -986,8 +849,6 @@ document.addEventListener('paste', e => {
     showError(err.message);
   }
 });
-
-// ── Init: load sample into table ──
 loadSampleToTable();
 </script>
 </body>
