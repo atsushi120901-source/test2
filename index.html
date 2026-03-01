@@ -201,6 +201,19 @@
   .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; }
   .color-swatch::-moz-color-swatch { border: none; border-radius: 50%; }
 
+  .table-size-controls {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 10px; flex-wrap: wrap;
+    font-size: 0.83rem; color: var(--text-muted);
+  }
+  .table-size-controls label { display: flex; align-items: center; gap: 5px; }
+  .table-size-controls input[type="number"] {
+    width: 52px; border: 1px solid var(--border); border-radius: 5px;
+    padding: 3px 6px; font-size: 0.83rem; outline: none;
+    font-family: inherit; text-align: center;
+  }
+  .table-size-controls input[type="number"]:focus { border-color: var(--accent); }
+
   .input-table-wrap { overflow-x: auto; margin-bottom: 12px; }
   .input-table { border-collapse: collapse; font-size: 0.78rem; width: max-content; }
   .input-table th, .input-table td {
@@ -242,9 +255,19 @@
     <h2>データ入力</h2>
     <div class="drop-zone" id="dropZone">
       <label for="fileInput" style="cursor:pointer;">
-        CSVファイルをここにドロップ、またはクリックして選択
+        CSVファイルをここにドロップ、またはクリックして選択<br>
+        <span style="font-size:0.78rem;">Ctrl+V でExcel・CSVデータを直接貼り付けも可</span>
       </label>
       <input type="file" id="fileInput" accept=".csv,text/plain">
+    </div>
+    <div class="table-size-controls">
+      <label>フラクション数
+        <input type="number" id="defaultRows" value="13" min="1" max="200">
+      </label>
+      <label>データセット数
+        <input type="number" id="defaultCols" value="3" min="1" max="20">
+      </label>
+      <button class="btn-secondary" id="resetTableBtn">テーブルをリセット</button>
     </div>
     <div class="input-table-wrap">
       <table id="inputTable" class="input-table"></table>
@@ -359,12 +382,14 @@ function pchipInterpolate(xs, ys, t) {
   return h00 * ys[k] + h10 * h * d[k] + h01 * ys[k + 1] + h11 * h * d[k + 1];
 }
 
-// ─── CSV PARSER ──────────────────────────────────────────────────────────────
-function parseCSV(text) {
+// ─── DELIMITED TEXT PARSER (CSV / TSV) ───────────────────────────────────────
+// Auto-detects delimiter: tab (Excel/TSV) or comma (CSV)
+function parseDelimited(text) {
   const lines = text.trim().split(/\r?\n/).filter(l => l.trim() !== '');
   if (lines.length < 2) throw new Error('データが不足しています（ヘッダー＋最低1行）');
 
-  const header = lines[0].split(',').map(s => s.trim());
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const header = lines[0].split(delim).map(s => s.trim());
   if (header.length < 2) throw new Error('列が不足しています（フラクション番号＋最低1列のデータ）');
 
   const labels = header.slice(1);
@@ -372,7 +397,7 @@ function parseCSV(text) {
   const datasets = labels.map(() => []);
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(',').map(s => s.trim());
+    const cols = lines[i].split(delim).map(s => s.trim());
     const frac = parseFloat(cols[0]);
     if (isNaN(frac)) throw new Error(`行 ${i + 1} のフラクション番号が無効です`);
     fractions.push(frac);
@@ -513,7 +538,7 @@ function removeColumn(j) {
 }
 
 function loadCSVToTable(csvText) {
-  const parsed = parseCSV(csvText);
+  const parsed = parseDelimited(csvText);
   tableState.fractions = parsed.fractions.map(String);
   tableState.labels    = parsed.labels.slice();
   tableState.datasets  = parsed.datasets.map(ds => ds.slice());
@@ -522,6 +547,13 @@ function loadCSVToTable(csvText) {
 
 function loadSampleToTable() {
   loadCSVToTable(SAMPLE);
+}
+
+function resetTable(nRows, nCols) {
+  tableState.fractions = Array.from({ length: nRows }, (_, i) => String(i + 1));
+  tableState.labels    = Array.from({ length: nCols }, (_, j) => 'Dataset ' + (j + 1));
+  tableState.datasets  = Array.from({ length: nCols }, () => Array(nRows).fill(''));
+  buildTableDOM();
 }
 
 // Read DOM inputs back into tableState and return a validated data object.
@@ -836,13 +868,21 @@ document.getElementById('plotBtn').addEventListener('click', () => {
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
-  tableState = { fractions: ['1'], labels: ['Dataset 1'], datasets: [['']] };
-  buildTableDOM();
+  const nRows = Math.max(1, parseInt(document.getElementById('defaultRows').value) || 13);
+  const nCols = Math.max(1, parseInt(document.getElementById('defaultCols').value) || 3);
+  resetTable(nRows, nCols);
   document.getElementById('emptyState').style.display = 'block';
   document.getElementById('chart').style.display = 'none';
   document.getElementById('legend').innerHTML = '';
   clearError();
   currentData = null;
+});
+
+document.getElementById('resetTableBtn').addEventListener('click', () => {
+  const nRows = Math.max(1, parseInt(document.getElementById('defaultRows').value) || 13);
+  const nCols = Math.max(1, parseInt(document.getElementById('defaultCols').value) || 3);
+  resetTable(nRows, nCols);
+  clearError();
 });
 
 document.getElementById('sampleBtn').addEventListener('click', () => {
@@ -897,6 +937,23 @@ window.addEventListener('resize', () => {
   resizeTimer = setTimeout(() => {
     if (currentData) drawChart(currentData);
   }, 120);
+});
+
+// ── Paste interceptor (Excel TSV / CSV) ──
+document.addEventListener('paste', e => {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  const hasTab = text.includes('\t');
+  const hasNewline = text.includes('\n');
+  const targetIsInput = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+  // Intercept tab-separated (Excel) data, or multi-line text pasted outside an input cell
+  if (!hasTab && !(hasNewline && !targetIsInput)) return;
+  e.preventDefault();
+  try {
+    loadCSVToTable(text);
+    clearError();
+  } catch (err) {
+    showError(err.message);
+  }
 });
 
 // ── Init: load sample into table ──
