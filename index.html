@@ -185,6 +185,21 @@
     margin: 0 auto 14px;
     opacity: 0.3;
   }
+
+  .color-swatch {
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 50%;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    background: none;
+    overflow: hidden;
+  }
+  .color-swatch::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
+  .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; }
+  .color-swatch::-moz-color-swatch { border: none; border-radius: 50%; }
 </style>
 </head>
 <body>
@@ -247,12 +262,15 @@ const SAMPLE = `Fraction,Protein A,Protein B,Protein C
 
 // ─── COLORS ─────────────────────────────────────────────────────────────────
 const PALETTE = [
-  { dot: '#f472b6', line: '#f472b6' },
-  { dot: '#60a5fa', line: '#60a5fa' },
-  { dot: '#34d399', line: '#34d399' },
-  { dot: '#fb923c', line: '#fb923c' },
-  { dot: '#a78bfa', line: '#a78bfa' },
+  '#f472b6',
+  '#60a5fa',
+  '#34d399',
+  '#fb923c',
+  '#a78bfa',
 ];
+
+// User-selected colors (hex strings); reset to PALETTE defaults on each render
+let userColors = [];
 
 // ─── PCHIP IMPLEMENTATION ───────────────────────────────────────────────────
 function pchipDerivatives(xs, ys) {
@@ -426,43 +444,50 @@ function drawChart(data) {
   });
 
   // ── Draw Y axes ──
-  function drawYAxis(dsIdx, xPos, side) {
-    const col = PALETTE[dsIdx % PALETTE.length];
+  function drawYAxis(dsIdx, xPos, side, color) {
     const { max, step } = scales[dsIdx];
     const nSteps = Math.round(max / step);
+    const tickDir = side === 'left' ? -1 : 1;
 
     // Axis line (thin colored)
-    ctx.strokeStyle = col.line + '55';
+    ctx.strokeStyle = color + '55';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(xPos, plotY0);
     ctx.lineTo(xPos, plotY1);
     ctx.stroke();
 
-    ctx.fillStyle = col.dot;
+    // Measure max tick label width for dynamic label offset
     ctx.font = '10px monospace';
-    ctx.textAlign = side === 'left' ? 'right' : 'left';
+    let maxTickW = 0;
+    for (let i = 0; i <= nSteps; i++) {
+      const val = i * step;
+      const lbl = val % 1 === 0 ? val.toString() : val.toFixed(2);
+      maxTickW = Math.max(maxTickW, ctx.measureText(lbl).width);
+    }
 
+    ctx.textAlign = side === 'left' ? 'right' : 'left';
     for (let i = 0; i <= nSteps; i++) {
       const val = i * step;
       const y = plotY1 - (val / max) * plotH;
-      const label = val % 1 === 0 ? val.toString() : val.toFixed(2);
-      const tickDir = side === 'left' ? -1 : 1;
-      ctx.strokeStyle = col.line + '55';
+      const lbl = val % 1 === 0 ? val.toString() : val.toFixed(2);
+      ctx.strokeStyle = color + '55';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(xPos, y);
       ctx.lineTo(xPos + tickDir * 5, y);
       ctx.stroke();
-      ctx.fillStyle = col.dot;
-      ctx.fillText(label, xPos + tickDir * 8, y + 3.5);
+      ctx.fillStyle = color;
+      ctx.fillText(lbl, xPos + tickDir * 8, y + 3.5);
     }
 
-    // Axis label (rotated)
+    // Axis label: placed just outside the tick numbers
+    // offset = numStart(8) + numWidth + gap(3) + halfFontSize(6)
+    const labelOffset = tickDir * (8 + maxTickW + 3 + 6);
     ctx.save();
-    ctx.translate(xPos + (side === 'left' ? -48 : 48), plotY0 + plotH / 2);
+    ctx.translate(xPos + labelOffset, plotY0 + plotH / 2);
     ctx.rotate(side === 'left' ? -Math.PI / 2 : Math.PI / 2);
-    ctx.fillStyle = col.dot;
+    ctx.fillStyle = color;
     ctx.font = '600 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels[dsIdx], 0, 0);
@@ -471,11 +496,11 @@ function drawChart(data) {
 
   // Left axes: datasets 0 .. n-2
   for (let i = 0; i < leftAxisCount; i++) {
-    drawYAxis(i, LEFT_BASE + i * AXIS_OFFSET, 'left');
+    drawYAxis(i, LEFT_BASE + i * AXIS_OFFSET, 'left', userColors[i] || PALETTE[i % PALETTE.length]);
   }
   // Right axis: last dataset (when n > 1)
   if (hasRightAxis) {
-    drawYAxis(n - 1, plotX1, 'right');
+    drawYAxis(n - 1, plotX1, 'right', userColors[n - 1] || PALETTE[(n - 1) % PALETTE.length]);
   }
 
   // ── X axis ──
@@ -504,7 +529,7 @@ function drawChart(data) {
   const CURVE_SAMPLES = 200;
 
   for (let di = 0; di < n; di++) {
-    const col = PALETTE[di % PALETTE.length];
+    const color = userColors[di] || PALETTE[di % PALETTE.length];
     const ys = datasets[di];
 
     // Build interpolated curve points
@@ -523,7 +548,7 @@ function drawChart(data) {
     for (let s = 1; s <= CURVE_SAMPLES; s++) {
       ctx.lineTo(curveX[s], curveY[s]);
     }
-    ctx.strokeStyle = col.line;
+    ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.lineJoin = 'round';
     ctx.stroke();
@@ -534,7 +559,7 @@ function drawChart(data) {
       const cy = toCanvasY(ys[fi], di);
       ctx.beginPath();
       ctx.arc(cx, cy, 5, 0, Math.PI * 2);
-      ctx.fillStyle = col.dot;
+      ctx.fillStyle = color;
       ctx.fill();
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
@@ -551,10 +576,25 @@ function buildLegend(labels) {
   const el = document.getElementById('legend');
   el.innerHTML = '';
   labels.forEach((name, i) => {
-    const col = PALETTE[i % PALETTE.length];
+    const color = userColors[i] || PALETTE[i % PALETTE.length];
     const item = document.createElement('div');
     item.className = 'legend-item';
-    item.innerHTML = `<span class="legend-dot" style="background:${col.dot}"></span><span>${name}</span>`;
+
+    const swatch = document.createElement('input');
+    swatch.type = 'color';
+    swatch.className = 'color-swatch';
+    swatch.value = color;
+    swatch.title = '色を変更';
+    swatch.addEventListener('input', e => {
+      userColors[i] = e.target.value;
+      if (currentData) drawChart(currentData);
+    });
+
+    const label = document.createElement('span');
+    label.textContent = name;
+
+    item.appendChild(swatch);
+    item.appendChild(label);
     el.appendChild(item);
   });
 }
@@ -580,6 +620,7 @@ function render(csvText) {
     showError(e.message);
     return;
   }
+  userColors = [];  // reset to palette defaults on each new render
   currentData = data;
   document.getElementById('emptyState').style.display = 'none';
   const canvas = document.getElementById('chart');
