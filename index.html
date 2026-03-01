@@ -200,6 +200,35 @@
   .color-swatch::-webkit-color-swatch-wrapper { padding: 0; border-radius: 50%; }
   .color-swatch::-webkit-color-swatch { border: none; border-radius: 50%; }
   .color-swatch::-moz-color-swatch { border: none; border-radius: 50%; }
+
+  .input-table-wrap { overflow-x: auto; margin-bottom: 12px; }
+  .input-table { border-collapse: collapse; font-size: 0.78rem; width: max-content; }
+  .input-table th, .input-table td {
+    border: 1px solid var(--border); padding: 4px 6px; white-space: nowrap;
+  }
+  .input-table th { background: #f8f8f8; font-weight: 600; }
+  .input-table thead th:first-child { font-size: 0.75rem; color: var(--text-muted); min-width: 90px; }
+  .input-table input[type="text"],
+  .input-table input[type="number"] {
+    border: none; background: transparent; font-size: inherit;
+    width: 72px; outline: none; font-family: monospace;
+  }
+  .input-table .col-name-input {
+    width: 88px; font-family: inherit; font-weight: 600; font-size: 0.78rem;
+  }
+  .input-table .btn-icon {
+    background: none; border: none; cursor: pointer; color: #bbb;
+    padding: 0 2px; font-size: 0.85rem; line-height: 1; vertical-align: middle;
+  }
+  .input-table .btn-icon:hover { color: #dc2626; }
+  .input-table .add-col-th { border: none; background: none; padding: 4px 6px; }
+  .input-table tfoot td { border: none; padding-top: 6px; }
+
+  .curve-toggle {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px; cursor: pointer;
+  }
+  .curve-toggle input { cursor: pointer; }
 </style>
 </head>
 <body>
@@ -217,7 +246,9 @@
       </label>
       <input type="file" id="fileInput" accept=".csv,text/plain">
     </div>
-    <textarea id="csvInput" spellcheck="false" placeholder="CSVデータをここに貼り付けてください…"></textarea>
+    <div class="input-table-wrap">
+      <table id="inputTable" class="input-table"></table>
+    </div>
     <div class="actions">
       <button class="btn-primary" id="plotBtn">グラフ生成</button>
       <button class="btn-secondary" id="clearBtn">クリア</button>
@@ -228,6 +259,10 @@
 
   <div class="card">
     <h2>散布図</h2>
+    <label class="curve-toggle">
+      <input type="checkbox" id="showCurveChk" checked>
+      近似曲線を表示
+    </label>
     <div class="chart-wrap">
       <div id="emptyState">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -349,6 +384,177 @@ function parseCSV(text) {
   }
 
   return { labels, fractions, datasets };
+}
+
+// ─── TABLE STATE & DOM ───────────────────────────────────────────────────────
+let tableState = { fractions: [], labels: [], datasets: [] };
+
+function buildTableDOM() {
+  const tbl = document.getElementById('inputTable');
+  tbl.innerHTML = '';
+
+  const { fractions, labels, datasets } = tableState;
+  const nCols = labels.length;
+  const nRows = fractions.length;
+
+  // ── THEAD ──
+  const thead = tbl.createTHead();
+  const hRow = thead.insertRow();
+
+  // "フラクション" fixed header
+  const th0 = document.createElement('th');
+  th0.textContent = 'フラクション';
+  hRow.appendChild(th0);
+
+  // One header cell per dataset
+  labels.forEach((lbl, j) => {
+    const th = document.createElement('th');
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'col-name-input';
+    inp.value = lbl;
+    inp.addEventListener('change', e => { tableState.labels[j] = e.target.value; });
+    const del = document.createElement('button');
+    del.className = 'btn-icon';
+    del.title = '列を削除';
+    del.textContent = '×';
+    del.addEventListener('click', () => removeColumn(j));
+    th.appendChild(inp);
+    th.appendChild(del);
+    hRow.appendChild(th);
+  });
+
+  // "+ 列追加" button cell
+  const thAdd = document.createElement('th');
+  thAdd.className = 'add-col-th';
+  const addColBtn = document.createElement('button');
+  addColBtn.className = 'btn-secondary';
+  addColBtn.style.cssText = 'padding:3px 10px;font-size:0.78rem;';
+  addColBtn.textContent = '+ 列追加';
+  addColBtn.addEventListener('click', addColumn);
+  thAdd.appendChild(addColBtn);
+  hRow.appendChild(thAdd);
+
+  // ── TBODY ──
+  const tbody = tbl.createTBody();
+  fractions.forEach((frac, i) => {
+    const row = tbody.insertRow();
+
+    // Fraction cell
+    const fracTd = row.insertCell();
+    const fracInp = document.createElement('input');
+    fracInp.type = 'text';
+    fracInp.value = frac;
+    fracInp.addEventListener('change', e => { tableState.fractions[i] = e.target.value; });
+    const delRowBtn = document.createElement('button');
+    delRowBtn.className = 'btn-icon';
+    delRowBtn.title = '行を削除';
+    delRowBtn.textContent = '×';
+    delRowBtn.addEventListener('click', () => removeRow(i));
+    fracTd.appendChild(fracInp);
+    fracTd.appendChild(delRowBtn);
+
+    // Data cells
+    datasets.forEach((ds, j) => {
+      const td = row.insertCell();
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.step = 'any';
+      inp.value = ds[i] !== undefined ? ds[i] : '';
+      inp.addEventListener('change', e => {
+        tableState.datasets[j][i] = e.target.value === '' ? '' : parseFloat(e.target.value);
+      });
+      td.appendChild(inp);
+    });
+
+    // Empty cell under "+ 列追加" column
+    row.insertCell();
+  });
+
+  // ── TFOOT ──
+  const tfoot = tbl.createTFoot();
+  const fRow = tfoot.insertRow();
+  const addTd = fRow.insertCell();
+  addTd.colSpan = nCols + 2;
+  const addRowBtn = document.createElement('button');
+  addRowBtn.className = 'btn-secondary';
+  addRowBtn.style.cssText = 'padding:4px 14px;font-size:0.78rem;';
+  addRowBtn.textContent = '+ 行追加';
+  addRowBtn.addEventListener('click', addRow);
+  addTd.appendChild(addRowBtn);
+}
+
+function addRow() {
+  const nextFrac = tableState.fractions.length + 1;
+  tableState.fractions.push(String(nextFrac));
+  tableState.datasets.forEach(ds => ds.push(''));
+  buildTableDOM();
+}
+
+function removeRow(i) {
+  if (tableState.fractions.length <= 1) return;
+  tableState.fractions.splice(i, 1);
+  tableState.datasets.forEach(ds => ds.splice(i, 1));
+  buildTableDOM();
+}
+
+function addColumn() {
+  const j = tableState.labels.length + 1;
+  tableState.labels.push('Dataset ' + j);
+  tableState.datasets.push(tableState.fractions.map(() => ''));
+  buildTableDOM();
+}
+
+function removeColumn(j) {
+  if (tableState.labels.length <= 1) return;
+  tableState.labels.splice(j, 1);
+  tableState.datasets.splice(j, 1);
+  buildTableDOM();
+}
+
+function loadCSVToTable(csvText) {
+  const parsed = parseCSV(csvText);
+  tableState.fractions = parsed.fractions.map(String);
+  tableState.labels    = parsed.labels.slice();
+  tableState.datasets  = parsed.datasets.map(ds => ds.slice());
+  buildTableDOM();
+}
+
+function loadSampleToTable() {
+  loadCSVToTable(SAMPLE);
+}
+
+// Read DOM inputs back into tableState and return a validated data object.
+// Returns null and shows error on invalid input.
+function readTableState() {
+  // Sync inputs back into tableState from DOM
+  const tbl = document.getElementById('inputTable');
+  const rows = tbl.tBodies[0].rows;
+  const headerInputs = tbl.tHead.rows[0].querySelectorAll('.col-name-input');
+
+  headerInputs.forEach((inp, j) => { tableState.labels[j] = inp.value.trim() || ('Dataset ' + (j + 1)); });
+
+  const fractions = [];
+  const datasets = tableState.labels.map(() => []);
+
+  for (let i = 0; i < rows.length; i++) {
+    const fracVal = rows[i].cells[0].querySelector('input').value.trim();
+    const f = parseFloat(fracVal);
+    if (isNaN(f)) { showError(`行 ${i + 1} のフラクション値が無効です: "${fracVal}"`); return null; }
+    fractions.push(f);
+    for (let j = 0; j < tableState.labels.length; j++) {
+      const cell = rows[i].cells[j + 1];
+      if (!cell) { showError(`行 ${i + 1}, 列 "${tableState.labels[j]}" のデータがありません`); return null; }
+      const v = parseFloat(cell.querySelector('input').value);
+      if (isNaN(v)) { showError(`行 ${i + 1}, 列 "${tableState.labels[j]}" の値が無効です`); return null; }
+      datasets[j].push(v);
+    }
+  }
+
+  if (fractions.length === 0) { showError('データ行が1行以上必要です'); return null; }
+  if (tableState.labels.length === 0) { showError('データセットが1列以上必要です'); return null; }
+
+  return { labels: tableState.labels.slice(), fractions, datasets };
 }
 
 // ─── CHART DRAWING ──────────────────────────────────────────────────────────
@@ -532,26 +738,26 @@ function drawChart(data) {
     const color = userColors[di] || PALETTE[di % PALETTE.length];
     const ys = datasets[di];
 
-    // Build interpolated curve points
-    const curveX = [];
-    const curveY = [];
-    for (let s = 0; s <= CURVE_SAMPLES; s++) {
-      const t = xMin + (s / CURVE_SAMPLES) * xRange;
-      const interpVal = pchipInterpolate(fractions, ys, t);
-      curveX.push(toCanvasX(t));
-      curveY.push(toCanvasY(Math.max(0, interpVal), di));
+    // Curve line (PCHIP smooth interpolation)
+    if (showCurve && fractions.length >= 2) {
+      const curveX = [];
+      const curveY = [];
+      for (let s = 0; s <= CURVE_SAMPLES; s++) {
+        const t = xMin + (s / CURVE_SAMPLES) * xRange;
+        const interpVal = pchipInterpolate(fractions, ys, t);
+        curveX.push(toCanvasX(t));
+        curveY.push(toCanvasY(Math.max(0, interpVal), di));
+      }
+      ctx.beginPath();
+      ctx.moveTo(curveX[0], curveY[0]);
+      for (let s = 1; s <= CURVE_SAMPLES; s++) {
+        ctx.lineTo(curveX[s], curveY[s]);
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
     }
-
-    // Curve line
-    ctx.beginPath();
-    ctx.moveTo(curveX[0], curveY[0]);
-    for (let s = 1; s <= CURVE_SAMPLES; s++) {
-      ctx.lineTo(curveX[s], curveY[s]);
-    }
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    ctx.stroke();
 
     // Data points (dots)
     fractions.forEach((frac, fi) => {
@@ -601,6 +807,7 @@ function buildLegend(labels) {
 
 // ─── MAIN FLOW ───────────────────────────────────────────────────────────────
 let currentData = null;
+let showCurve = true;
 
 function showError(msg) {
   const el = document.getElementById('errorMsg');
@@ -611,16 +818,9 @@ function clearError() {
   document.getElementById('errorMsg').style.display = 'none';
 }
 
-function render(csvText) {
-  clearError();
-  let data;
-  try {
-    data = parseCSV(csvText);
-  } catch (e) {
-    showError(e.message);
-    return;
-  }
-  userColors = [];  // reset to palette defaults on each new render
+// Accepts a pre-validated data object {labels, fractions, datasets}
+function render(data) {
+  userColors = [];
   currentData = data;
   document.getElementById('emptyState').style.display = 'none';
   const canvas = document.getElementById('chart');
@@ -630,11 +830,14 @@ function render(csvText) {
 }
 
 document.getElementById('plotBtn').addEventListener('click', () => {
-  render(document.getElementById('csvInput').value);
+  clearError();
+  const data = readTableState();
+  if (data) render(data);
 });
 
 document.getElementById('clearBtn').addEventListener('click', () => {
-  document.getElementById('csvInput').value = '';
+  tableState = { fractions: ['1'], labels: ['Dataset 1'], datasets: [['']] };
+  buildTableDOM();
   document.getElementById('emptyState').style.display = 'block';
   document.getElementById('chart').style.display = 'none';
   document.getElementById('legend').innerHTML = '';
@@ -643,8 +846,14 @@ document.getElementById('clearBtn').addEventListener('click', () => {
 });
 
 document.getElementById('sampleBtn').addEventListener('click', () => {
-  document.getElementById('csvInput').value = SAMPLE;
   clearError();
+  loadSampleToTable();
+});
+
+// ── Curve toggle ──
+document.getElementById('showCurveChk').addEventListener('change', e => {
+  showCurve = e.target.checked;
+  if (currentData) drawChart(currentData);
 });
 
 // ── File drag & drop ──
@@ -671,8 +880,12 @@ fileInput.addEventListener('change', () => {
 function readFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
-    document.getElementById('csvInput').value = e.target.result;
-    clearError();
+    try {
+      loadCSVToTable(e.target.result);
+      clearError();
+    } catch (err) {
+      showError(err.message);
+    }
   };
   reader.readAsText(file, 'UTF-8');
 }
@@ -686,8 +899,8 @@ window.addEventListener('resize', () => {
   }, 120);
 });
 
-// ── Init: load sample ──
-document.getElementById('csvInput').value = SAMPLE;
+// ── Init: load sample into table ──
+loadSampleToTable();
 </script>
 </body>
 </html>
