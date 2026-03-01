@@ -267,6 +267,9 @@
       <label>データセット数
         <input type="number" id="defaultCols" value="3" min="1" max="20">
       </label>
+      <label>横軸ラベル
+        <input type="text" id="xAxisLabel" value="フラクション番号" style="width:120px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
+      </label>
       <button class="btn-secondary" id="resetTableBtn">テーブルをリセット</button>
     </div>
     <div class="input-table-wrap">
@@ -758,10 +761,11 @@ function drawChart(data) {
   });
 
   // X axis label
+  const xAxisLabelText = document.getElementById('xAxisLabel').value.trim() || 'フラクション番号';
   ctx.fillStyle = '#555555';
   ctx.font = '600 11px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('フラクション番号', plotX0 + plotW / 2, H - 8);
+  ctx.fillText(xAxisLabelText, plotX0 + plotW / 2, H - 8);
 
   // ── Draw curves + fills + dots per dataset ──
   const CURVE_SAMPLES = 200;
@@ -888,6 +892,11 @@ document.getElementById('resetTableBtn').addEventListener('click', () => {
 document.getElementById('sampleBtn').addEventListener('click', () => {
   clearError();
   loadSampleToTable();
+});
+
+// ── X axis label live update ──
+document.getElementById('xAxisLabel').addEventListener('input', () => {
+  if (currentData) drawChart(currentData);
 });
 
 // ── Curve toggle ──
