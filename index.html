@@ -270,9 +270,6 @@
       <label>横軸ラベル
         <input type="text" id="xAxisLabel" value="フラクション番号" style="width:120px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
       </label>
-      <label>グラフタイトル
-        <input type="text" id="chartTitle" placeholder="（任意）" style="width:160px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
-      </label>
       <button class="btn-secondary" id="resetTableBtn">テーブルをリセット</button>
     </div>
     <div class="input-table-wrap">
@@ -288,6 +285,11 @@
 
   <div class="card">
     <h2>散布図</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <label for="chartTitle" style="font-size:0.83rem;color:var(--text-muted);white-space:nowrap;">グラフタイトル</label>
+      <input type="text" id="chartTitle" placeholder="（任意）"
+        style="flex:1;max-width:400px;border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:0.9rem;outline:none;font-family:inherit;">
+    </div>
     <label class="curve-toggle">
       <input type="checkbox" id="showCurveChk" checked>
       近似曲線を表示
