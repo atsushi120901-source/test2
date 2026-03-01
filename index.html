@@ -398,8 +398,8 @@ function parseDelimited(text) {
 
   for (let i = 1; i < lines.length; i++) {
     const cols = lines[i].split(delim).map(s => s.trim());
-    const frac = parseFloat(cols[0]);
-    if (isNaN(frac)) throw new Error(`行 ${i + 1} のフラクション番号が無効です`);
+    const frac = cols[0].trim();
+    if (!frac) throw new Error(`行 ${i + 1} のフラクション値が空です`);
     fractions.push(frac);
     for (let j = 0; j < labels.length; j++) {
       const v = parseFloat(cols[j + 1]);
@@ -571,9 +571,8 @@ function readTableState() {
 
   for (let i = 0; i < rows.length; i++) {
     const fracVal = rows[i].cells[0].querySelector('input').value.trim();
-    const f = parseFloat(fracVal);
-    if (isNaN(f)) { showError(`行 ${i + 1} のフラクション値が無効です: "${fracVal}"`); return null; }
-    fractions.push(f);
+    if (!fracVal) { showError(`行 ${i + 1} のフラクション値が空です`); return null; }
+    fractions.push(fracVal);
     for (let j = 0; j < tableState.labels.length; j++) {
       const cell = rows[i].cells[j + 1];
       if (!cell) { showError(`行 ${i + 1}, 列 "${tableState.labels[j]}" のデータがありません`); return null; }
@@ -634,8 +633,10 @@ function drawChart(data) {
   const hasRightAxis = n > 1;
   const leftAxisCount = hasRightAxis ? n - 1 : 1;
   const rightSpace = hasRightAxis ? 75 : MARGIN_RIGHT;
+  const rightAxisXPos = W - rightSpace;
   const plotX0 = LEFT_BASE + (leftAxisCount - 1) * AXIS_OFFSET + 20;
-  const plotX1 = W - rightSpace;
+  // 20px gap between plot area and right axis (mirrors the left side gap)
+  const plotX1 = hasRightAxis ? rightAxisXPos - 20 : W - MARGIN_RIGHT;
   const plotY0 = MARGIN_TOP;
   const plotY1 = H - MARGIN_BOTTOM;
   const plotW  = plotX1 - plotX0;
@@ -644,13 +645,12 @@ function drawChart(data) {
   // ── Scale each dataset ──
   const scales = datasets.map(ds => niceRange(Math.max(...ds)));
 
-  // ── X range ──
-  const xMin = Math.min(...fractions);
-  const xMax = Math.max(...fractions);
-  const xRange = xMax - xMin || 1;
+  // ── X range: use index-based positioning to support alphanumeric fractions ──
+  const xRange = fractions.length > 1 ? fractions.length - 1 : 1;
+  const xIndices = fractions.map((_, i) => i);  // [0, 1, 2, ..., n-1]
 
-  function toCanvasX(frac) {
-    return plotX0 + ((frac - xMin) / xRange) * plotW;
+  function toCanvasX(idx) {
+    return plotX0 + (idx / xRange) * plotW;
   }
   function toCanvasY(val, scaleIdx) {
     return plotY1 - (val / scales[scaleIdx].max) * plotH;
@@ -672,8 +672,8 @@ function drawChart(data) {
     ctx.stroke();
   }
   // Vertical grid
-  fractions.forEach(frac => {
-    const x = toCanvasX(frac);
+  fractions.forEach((frac, fi) => {
+    const x = toCanvasX(fi);
     ctx.strokeStyle = '#e5e5e5';
     ctx.beginPath();
     ctx.moveTo(x, plotY0);
@@ -736,9 +736,9 @@ function drawChart(data) {
   for (let i = 0; i < leftAxisCount; i++) {
     drawYAxis(i, LEFT_BASE + i * AXIS_OFFSET, 'left', userColors[i] || PALETTE[i % PALETTE.length]);
   }
-  // Right axis: last dataset (when n > 1)
+  // Right axis: last dataset (when n > 1), drawn at rightAxisXPos (20px right of plotX1)
   if (hasRightAxis) {
-    drawYAxis(n - 1, plotX1, 'right', userColors[n - 1] || PALETTE[(n - 1) % PALETTE.length]);
+    drawYAxis(n - 1, rightAxisXPos, 'right', userColors[n - 1] || PALETTE[(n - 1) % PALETTE.length]);
   }
 
   // ── X axis ──
@@ -752,8 +752,8 @@ function drawChart(data) {
   ctx.fillStyle = '#555555';
   ctx.font = '10px monospace';
   ctx.textAlign = 'center';
-  fractions.forEach(frac => {
-    const x = toCanvasX(frac);
+  fractions.forEach((frac, fi) => {
+    const x = toCanvasX(fi);
     ctx.fillText(frac, x, plotY1 + 18);
   });
 
@@ -775,8 +775,8 @@ function drawChart(data) {
       const curveX = [];
       const curveY = [];
       for (let s = 0; s <= CURVE_SAMPLES; s++) {
-        const t = xMin + (s / CURVE_SAMPLES) * xRange;
-        const interpVal = pchipInterpolate(fractions, ys, t);
+        const t = (s / CURVE_SAMPLES) * xRange;  // 0 .. xRange (index space)
+        const interpVal = pchipInterpolate(xIndices, ys, t);
         curveX.push(toCanvasX(t));
         curveY.push(toCanvasY(Math.max(0, interpVal), di));
       }
@@ -793,7 +793,7 @@ function drawChart(data) {
 
     // Data points (dots)
     fractions.forEach((frac, fi) => {
-      const cx = toCanvasX(frac);
+      const cx = toCanvasX(fi);
       const cy = toCanvasY(ys[fi], di);
       ctx.beginPath();
       ctx.arc(cx, cy, 5, 0, Math.PI * 2);
