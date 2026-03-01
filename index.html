@@ -270,7 +270,9 @@
       <label>横軸ラベル
         <input type="text" id="xAxisLabel" value="フラクション番号" style="width:120px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
       </label>
-      <button class="btn-secondary" id="resetTableBtn">テーブルをリセット</button>
+      <label>グラフタイトル
+        <input type="text" id="chartTitle" placeholder="（任意）" style="width:160px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
+      </label>
     </div>
     <div class="input-table-wrap">
       <table id="inputTable" class="input-table"></table>
@@ -285,11 +287,6 @@
 
   <div class="card">
     <h2>散布図</h2>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <label for="chartTitle" style="font-size:0.83rem;color:var(--text-muted);white-space:nowrap;">グラフタイトル</label>
-      <input type="text" id="chartTitle" placeholder="（任意）"
-        style="flex:1;max-width:400px;border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:0.9rem;outline:none;font-family:inherit;">
-    </div>
     <label class="curve-toggle">
       <input type="checkbox" id="showCurveChk" checked>
       近似曲線を表示
@@ -350,9 +347,20 @@ function pchipDerivatives(xs, ys) {
     delta.push((ys[i + 1] - ys[i]) / h[i]);
   }
 
-  // Endpoints: one-sided differences
-  d[0] = delta[0];
-  d[n - 1] = delta[n - 2];
+  // Endpoints: Fritsch-Carlson 3-point formula with monotonicity clamp
+  if (n >= 3) {
+    let d0 = ((2*h[0] + h[1]) * delta[0] - h[0] * delta[1]) / (h[0] + h[1]);
+    if (Math.sign(d0) !== Math.sign(delta[0])) d0 = 0;
+    else if (Math.abs(d0) > 3 * Math.abs(delta[0])) d0 = 3 * delta[0];
+    d[0] = d0;
+    let dn = ((2*h[n-2] + h[n-3]) * delta[n-2] - h[n-2] * delta[n-3]) / (h[n-2] + h[n-3]);
+    if (Math.sign(dn) !== Math.sign(delta[n-2])) dn = 0;
+    else if (Math.abs(dn) > 3 * Math.abs(delta[n-2])) dn = 3 * delta[n-2];
+    d[n-1] = dn;
+  } else {
+    d[0] = delta[0];
+    d[n - 1] = delta[n - 2];
+  }
 
   for (let i = 1; i < n - 1; i++) {
     if (delta[i - 1] * delta[i] <= 0) {
@@ -598,7 +606,7 @@ function readTableState() {
 
 // ─── CHART DRAWING ──────────────────────────────────────────────────────────
 const MARGIN_TOP    = 30;
-const MARGIN_BOTTOM = 50;
+const MARGIN_BOTTOM = 54;
 const MARGIN_RIGHT  = 20;
 const LEFT_BASE     = 65;  // x-pos of leftmost (axis 0)
 const AXIS_OFFSET   = 55;
@@ -639,12 +647,12 @@ function drawChart(data) {
 
   // ── Chart title (topMargin must be computed before layout) ──
   const titleText = document.getElementById('chartTitle').value.trim();
-  const topMargin = titleText ? 52 : MARGIN_TOP;
+  const topMargin = titleText ? 58 : MARGIN_TOP;
 
   // ── Margins: left axes (0..n-2), right axis (n-1) when n>1 ──
   const hasRightAxis = n > 1;
   const leftAxisCount = hasRightAxis ? n - 1 : 1;
-  const rightSpace = hasRightAxis ? 75 : MARGIN_RIGHT;
+  const rightSpace = hasRightAxis ? 95 : MARGIN_RIGHT;
   const rightAxisXPos = W - rightSpace;
   const plotX0 = LEFT_BASE + (leftAxisCount - 1) * AXIS_OFFSET + 20;
   // 20px gap between plot area and right axis (mirrors the left side gap)
@@ -675,9 +683,9 @@ function drawChart(data) {
   // ── Chart title (drawn after background so it is not overwritten) ──
   if (titleText) {
     ctx.fillStyle = '#1a1a1a';
-    ctx.font = 'bold 15px sans-serif';
+    ctx.font = 'bold 18px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(titleText, W / 2, 26);
+    ctx.fillText(titleText, W / 2, 34);
   }
 
   // ── Grid ──
@@ -716,7 +724,7 @@ function drawChart(data) {
     ctx.stroke();
 
     // Measure max tick label width for dynamic label offset
-    ctx.font = '10px monospace';
+    ctx.font = '12px monospace';
     let maxTickW = 0;
     for (let i = 0; i <= nSteps; i++) {
       const val = i * step;
@@ -736,17 +744,17 @@ function drawChart(data) {
       ctx.lineTo(xPos + tickDir * 5, y);
       ctx.stroke();
       ctx.fillStyle = color;
-      ctx.fillText(lbl, xPos + tickDir * 8, y + 3.5);
+      ctx.fillText(lbl, xPos + tickDir * 8, y + 4.5);
     }
 
     // Axis label: placed just outside the tick numbers
-    // offset = numStart(8) + numWidth + gap(3) + halfFontSize(6)
-    const labelOffset = tickDir * (8 + maxTickW + 3 + 6);
+    // offset = numStart(8) + numWidth + gap(3) + halfFontSize(7)
+    const labelOffset = tickDir * (8 + maxTickW + 3 + 7);
     ctx.save();
     ctx.translate(xPos + labelOffset, plotY0 + plotH / 2);
     ctx.rotate(side === 'left' ? -Math.PI / 2 : Math.PI / 2);
     ctx.fillStyle = color;
-    ctx.font = '600 11px sans-serif';
+    ctx.font = '600 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(labels[dsIdx], 0, 0);
     ctx.restore();
@@ -770,17 +778,17 @@ function drawChart(data) {
   ctx.stroke();
 
   ctx.fillStyle = '#555555';
-  ctx.font = '10px monospace';
+  ctx.font = '12px monospace';
   ctx.textAlign = 'center';
   fractions.forEach((frac, fi) => {
     const x = toCanvasX(fi);
-    ctx.fillText(frac, x, plotY1 + 18);
+    ctx.fillText(frac, x, plotY1 + 20);
   });
 
   // X axis label
   const xAxisLabelText = document.getElementById('xAxisLabel').value.trim() || 'フラクション番号';
   ctx.fillStyle = '#555555';
-  ctx.font = '600 11px sans-serif';
+  ctx.font = '600 13px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(xAxisLabelText, plotX0 + plotW / 2, H - 8);
 
@@ -791,25 +799,25 @@ function drawChart(data) {
     const color = userColors[di] || PALETTE[di % PALETTE.length];
     const ys = datasets[di];
 
-    // Curve line (PCHIP smooth interpolation)
+    // Curve line (PCHIP smooth interpolation, clipped to plot area)
     if (showCurve && fractions.length >= 2) {
-      const curveX = [];
-      const curveY = [];
-      for (let s = 0; s <= CURVE_SAMPLES; s++) {
-        const t = (s / CURVE_SAMPLES) * xRange;  // 0 .. xRange (index space)
-        const interpVal = pchipInterpolate(xIndices, ys, t);
-        curveX.push(toCanvasX(t));
-        curveY.push(toCanvasY(Math.max(0, interpVal), di));
-      }
+      ctx.save();
       ctx.beginPath();
-      ctx.moveTo(curveX[0], curveY[0]);
-      for (let s = 1; s <= CURVE_SAMPLES; s++) {
-        ctx.lineTo(curveX[s], curveY[s]);
+      ctx.rect(plotX0, plotY0, plotW, plotH);
+      ctx.clip();
+      ctx.beginPath();
+      for (let s = 0; s <= CURVE_SAMPLES; s++) {
+        const t = (s / CURVE_SAMPLES) * xRange;
+        const interpVal = pchipInterpolate(xIndices, ys, t);
+        const cx = toCanvasX(t);
+        const cy = toCanvasY(interpVal, di);
+        s === 0 ? ctx.moveTo(cx, cy) : ctx.lineTo(cx, cy);
       }
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.lineJoin = 'round';
       ctx.stroke();
+      ctx.restore();
     }
 
     // Data points (dots)
@@ -899,12 +907,6 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   currentData = null;
 });
 
-document.getElementById('resetTableBtn').addEventListener('click', () => {
-  const nRows = Math.max(1, parseInt(document.getElementById('defaultRows').value) || 13);
-  const nCols = Math.max(1, parseInt(document.getElementById('defaultCols').value) || 3);
-  resetTable(nRows, nCols);
-  clearError();
-});
 
 document.getElementById('sampleBtn').addEventListener('click', () => {
   clearError();
