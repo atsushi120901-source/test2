@@ -270,6 +270,9 @@
       <label>横軸ラベル
         <input type="text" id="xAxisLabel" value="フラクション番号" style="width:120px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
       </label>
+      <label>グラフタイトル
+        <input type="text" id="chartTitle" placeholder="（任意）" style="width:160px;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:0.83rem;outline:none;font-family:inherit;">
+      </label>
       <button class="btn-secondary" id="resetTableBtn">テーブルをリセット</button>
     </div>
     <div class="input-table-wrap">
@@ -323,11 +326,11 @@ const SAMPLE = `Fraction,Protein A,Protein B,Protein C
 
 // ─── COLORS ─────────────────────────────────────────────────────────────────
 const PALETTE = [
-  '#f472b6',
-  '#60a5fa',
-  '#34d399',
-  '#fb923c',
-  '#a78bfa',
+  '#e11d48',  // rose-600
+  '#2563eb',  // blue-600
+  '#16a34a',  // green-600
+  '#ea580c',  // orange-600
+  '#7c3aed',  // violet-600
 ];
 
 // User-selected colors (hex strings); reset to PALETTE defaults on each render
@@ -632,6 +635,16 @@ function drawChart(data) {
   const { labels, fractions, datasets } = data;
   const n = labels.length;
 
+  // ── Chart title ──
+  const titleText = document.getElementById('chartTitle').value.trim();
+  const topMargin = titleText ? 52 : MARGIN_TOP;
+  if (titleText) {
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(titleText, W / 2, 26);
+  }
+
   // ── Margins: left axes (0..n-2), right axis (n-1) when n>1 ──
   const hasRightAxis = n > 1;
   const leftAxisCount = hasRightAxis ? n - 1 : 1;
@@ -640,7 +653,7 @@ function drawChart(data) {
   const plotX0 = LEFT_BASE + (leftAxisCount - 1) * AXIS_OFFSET + 20;
   // 20px gap between plot area and right axis (mirrors the left side gap)
   const plotX1 = hasRightAxis ? rightAxisXPos - 20 : W - MARGIN_RIGHT;
-  const plotY0 = MARGIN_TOP;
+  const plotY0 = topMargin;
   const plotY1 = H - MARGIN_BOTTOM;
   const plotW  = plotX1 - plotX0;
   const plotH  = plotY1 - plotY0;
@@ -894,8 +907,11 @@ document.getElementById('sampleBtn').addEventListener('click', () => {
   loadSampleToTable();
 });
 
-// ── X axis label live update ──
+// ── X axis label / chart title live update ──
 document.getElementById('xAxisLabel').addEventListener('input', () => {
+  if (currentData) drawChart(currentData);
+});
+document.getElementById('chartTitle').addEventListener('input', () => {
   if (currentData) drawChart(currentData);
 });
 
